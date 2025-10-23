@@ -18,7 +18,7 @@ if lu ~= false and tonumber(lu) < tonumber(ARGV[1]) or lu == false and v == fals
 end
 return {v, lu}`)
 
-	setScript = redis.NewScript(`
+	 setScript = redis.NewScript(`
 local o = redis.call('HGET', KEYS[1], 'lockOwner')
 if o ~= ARGV[2] then
 		return

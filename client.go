@@ -175,6 +175,12 @@ func (c *Client) fetchNew(ctx context.Context, key string, expire time.Duration,
 func (c *Client) weakFetch(ctx context.Context, key string, expire time.Duration, fn func() (string, error)) (string, error) {
 	debugf("weakFetch: key=%s", key)
 	owner := shortuuid.New()
+	// 情况
+	// 1. hit:	未过期 -- 直接返回数据
+	// 2. hit:	已过期，抢锁成功 -- 异步fetchNew；直接返回数据
+	// 2. hit:	已过期，抢锁失败 -- 直接返回数据
+	// 3. miss:	抢锁成功 -- 同步fetchNew
+	// 4. miss:	抢锁失败 -- 保持轮询，直到 hit 或 miss（抢锁成功）
 	r, err := c.luaGet(ctx, key, owner)
 	for err == nil && r[0] == nil && r[1].(string) != locked {
 		debugf("empty result for %s locked by other, so sleep %s", key, c.Options.LockSleep.String())
